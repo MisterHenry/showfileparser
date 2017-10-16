@@ -87,3 +87,11 @@ def show_int_stat_to_excel(folder):
     # Save workbook
     wb.save('site-name.xlsx')
 
+
+def show_cdp_nei_det_to_excel(folder):
+
+    # Change to Log File Directory
+    os.chdir(folder)
+
+    pass
+
