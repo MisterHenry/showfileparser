@@ -3,8 +3,8 @@ Value ROMMON (\S+)
 Value HOSTNAME (\S+)
 Value UPTIME (.+)
 Value RUNNING_IMAGE (\S+)
-Value List HARDWARE (\S+\d\S+)
-Value List SERIAL (\S+)
+Value HARDWARE (\S+\d\S+)
+Value SERIAL (\S+)
 Value CONFIG_REGISTER (\S+)
 
 Start
