@@ -42,6 +42,8 @@ def show_version_to_excel(folder):
                 sh_ver_sheet.append(line)
 
     # Save workbook
+    sh_ver_sheet['I1'] = '=SUBTOTAL(3,H2:H{})'.format(sh_ver_sheet.max_row)
+    sh_ver_sheet.auto_filter.ref = 'A1:H1'
     wb.save('site-name.xlsx')
 
 
@@ -85,6 +87,8 @@ def show_int_stat_to_excel(folder):
                 sh_int_stat_sheet.append(line)
 
     # Save workbook
+    sh_int_stat_sheet['I1'] = '=SUBTOTAL(3,H2:H{})'.format(sh_int_stat_sheet.max_row)
+    sh_int_stat_sheet.auto_filter.ref = 'A1:H1'
     wb.save('site-name.xlsx')
 
 
