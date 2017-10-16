@@ -87,4 +87,3 @@ def show_int_stat_to_excel(folder):
     # Save workbook
     wb.save('site-name.xlsx')
 
-jj
