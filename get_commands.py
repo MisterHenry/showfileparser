@@ -54,12 +54,13 @@ def get_show_cdp_nei_det(logfile):
     show_cdp_nei_det_parsed = show_cdp_nei_det_table.ParseText(raw_cdp_nei_det_data.group(0))
 
     # Normalize Interface Name
+
     for line in show_cdp_nei_det_parsed:
         for i in range(0, len(line)):
             if 'GigabitEthernet' in line[i]:
                 line[i] = re.sub('^GigabitEthernet', 'Gi', line[i])
 
-            elif 'TenGigabitEthernet' in line[i]:
+            if 'TenGigabitEthernet' in line[i]:
                 line[i] = re.sub('^TenGigabitEthernet', 'Te', line[i])
 
     return show_cdp_nei_det_table.header, show_cdp_nei_det_parsed
