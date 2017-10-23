@@ -6,7 +6,6 @@ import openpyxl
 import datetime
 
 def log_file_to_show_ver(logfile):
-
     # Load the input file to a variable
     input_file = open(logfile)
     raw_text_data = input_file.read()
@@ -16,7 +15,7 @@ def log_file_to_show_ver(logfile):
     raw_version_data = re.search(r'#sh ver.*#sh mod', raw_text_data, re.DOTALL)
 
     # Run SHOW VERSION through the FSM.
-    show_version_template = open("../textfsm_templates/cisco_ios_show_version.template")
+    show_version_template = open("textfsm_templates/cisco_ios_show_version.template")
     show_version_table = textfsm.TextFSM(show_version_template)
     show_version_parsed = show_version_table.ParseText(raw_version_data.group(0))
 
@@ -32,9 +31,10 @@ def log_file_to_show_int_stat(logfile):
 
     # Get SH INT STAT Raw Data
     raw_interfaces_status_data = re.search(r'#sh int status.*#sh int trunk', raw_text_data, re.DOTALL)
+    #print raw_interfaces_status_data.group(0)
 
     # Run SHOW INTERFACES STATUS through the FSM.
-    show_interfaces_status_template = open("../textfsm_templates/cisco_ios_show_interfaces_status.template")
+    show_interfaces_status_template = open("textfsm_templates/cisco_ios_show_interfaces_status.template")
     show_interfaces_status_table = textfsm.TextFSM(show_interfaces_status_template)
     show_interfaces_status_parsed = show_interfaces_status_table.ParseText(raw_interfaces_status_data.group(0))
 
@@ -52,7 +52,7 @@ def log_file_to_show_cdp_nei_det(logfile):
     raw_cdp_nei_det_data = re.search(r'#sh cdp nei det.*#sh int desc', raw_text_data, re.DOTALL)
 
     # Run SHOW CDP NEI DET through the FSM.
-    show_cdp_nei_det_template = open("../textfsm_templates/cisco_ios_show_cdp_neighbors_detail.template")
+    show_cdp_nei_det_template = open("textfsm_templates/cisco_ios_show_cdp_neighbors_detail.template")
     show_cdp_nei_det_table = textfsm.TextFSM(show_cdp_nei_det_template)
     show_cdp_nei_det_parsed = show_cdp_nei_det_table.ParseText(raw_cdp_nei_det_data.group(0))
 
@@ -102,8 +102,7 @@ def log_file_to_matrix(logfile):
 
 def log_folder_to_matrix(logfolder):
 
-    # Change to Log File Directory
-    os.chdir(logfolder)
+    folder = os.path.abspath(logfolder)
 
     # List to hold all matrix data
     # ['VERSION', 'ROMMON', 'HOSTNAME', 'UPTIME', 'RUNNING_IMAGE', 'HARDWARE', 'SERIAL', 'CONFIG_REGISTER',
@@ -112,9 +111,9 @@ def log_folder_to_matrix(logfolder):
     log_folder_matrix = []
 
     # For each log file  get matrix header and matrix data
-    for logfile in os.listdir(os.getcwd()):
+    for logfile in os.listdir(folder):
         if logfile.endswith(".log"):
-            header, data = log_file_to_matrix(logfile)
+            header, data = log_file_to_matrix(os.path.join(folder, logfile))
             # If matrix_all is empty add header
 
             if len(log_folder_matrix) == 0:
@@ -128,17 +127,17 @@ def log_folder_to_matrix(logfolder):
 
 def show_version_to_excel(site, logfolder):
 
-    # Change to Log File Directory
-    os.chdir(logfolder)
+    folder = os.path.abspath(logfolder)
+    out_file = os.path.join(folder, '{}-show-info.xlsx'.format(site))
 
     # Create site xlsx if not already created
-    if not os.path.exists('{}-show-info.xlsx'.format(site)):
+    if not os.path.exists(out_file):
         wb = openpyxl.Workbook()
-        wb.save('{}-show-info.xlsx'.format(site))
+        wb.save(out_file)
         wb.close
 
     # Open workbook and delete sh_ver sheet if it exists
-    wb = openpyxl.load_workbook(filename='{}-show-info.xlsx'.format(site))
+    wb = openpyxl.load_workbook(out_file)
     if 'sh_ver' in wb.get_sheet_names():
         ws = wb.get_sheet_by_name('sh_ver')
         wb.remove_sheet(ws)
@@ -148,11 +147,11 @@ def show_version_to_excel(site, logfolder):
     sh_ver_sheet = wb.get_sheet_by_name('sh_ver')
 
     # For every file in Log Directory ending with .log
-    for fn in os.listdir(os.getcwd()):
+    for fn in os.listdir(folder):
 
         # Get show ver header and show ver data
         if fn.endswith(".log"):
-            sh_ver_header, sh_ver_data = log_file_to_show_ver(fn)
+            sh_ver_header, sh_ver_data = log_file_to_show_ver(os.path.join(folder, fn))
 
             # If row sheet length is 1, write header else write data
             if sh_ver_sheet.max_row == 1:
@@ -165,24 +164,24 @@ def show_version_to_excel(site, logfolder):
     # Save workbook
     sh_ver_sheet['I1'] = '=SUBTOTAL(3,H2:H{})'.format(sh_ver_sheet.max_row)
     sh_ver_sheet.auto_filter.ref = 'A1:H1'
-    wb.save('{}-show-info.xlsx'.format(site))
+    wb.save(out_file)
 
-    print 'SH VER TAB saved to:\t{}\{}-show-info.xlsx'.format(os.getcwd(), site)
+    print 'SH VER TAB saved to:\t\t{}'.format(out_file)
 
 
 def show_int_stat_to_excel(site, logfolder):
 
-    # Change to Log File Directory
-    os.chdir(logfolder)
+    folder = os.path.abspath(logfolder)
+    out_file = os.path.join(folder, '{}-show-info.xlsx'.format(site))
 
     # Create site xlsx if not already created
-    if not os.path.exists('{}-show-info.xlsx'.format(site)):
+    if not os.path.exists(out_file):
         wb = openpyxl.Workbook()
-        wb.save('{}-show-info.xlsx')
+        wb.save(out_file)
         wb.close
 
     # Open workbook and delete sh_int_stat sheet if it exists
-    wb = openpyxl.load_workbook(filename='{}-show-info.xlsx'.format(site))
+    wb = openpyxl.load_workbook(out_file)
     if 'sh_int_stat' in wb.get_sheet_names():
         ws = wb.get_sheet_by_name('sh_int_stat')
         wb.remove_sheet(ws)
@@ -192,12 +191,12 @@ def show_int_stat_to_excel(site, logfolder):
     sh_int_stat_sheet = wb.get_sheet_by_name('sh_int_stat')
 
     # For every file in Log Directory ending with .log
-    for fn in os.listdir(os.getcwd()):
+    for fn in os.listdir(folder):
 
         # Get sh_ver header and data, sh_int_stat header and data
         if fn.endswith(".log"):
-            sh_int_stat_header, sh_int_stat_data = log_file_to_show_int_stat(fn)
-            sh_ver_header, sh_ver_data = log_file_to_show_ver(fn)
+            sh_int_stat_header, sh_int_stat_data = log_file_to_show_int_stat(os.path.join(folder, fn))
+            sh_ver_header, sh_ver_data = log_file_to_show_ver(os.path.join(folder, fn))
 
             # If row sheet length is 1, insert HOSTNAME to header and write header
             if sh_int_stat_sheet.max_row == 1:
@@ -212,24 +211,24 @@ def show_int_stat_to_excel(site, logfolder):
     # Save workbook
     sh_int_stat_sheet['I1'] = '=SUBTOTAL(3,H2:H{})'.format(sh_int_stat_sheet.max_row)
     sh_int_stat_sheet.auto_filter.ref = 'A1:H1'
-    wb.save('{}-show-info.xlsx'.format(site))
+    wb.save(out_file)
 
-    print 'SH INT STAT Tab saved to:\t{}\{}-show-info.xlsx'.format(os.getcwd(), site)
+    print 'SH INT STAT Tab saved to:\t{}'.format(out_file)
 
 
 def show_cdp_nei_det_to_excel(site, logfolder):
 
-    # Change to Log File Directory
-    os.chdir(logfolder)
+    folder = os.path.abspath(logfolder)
+    out_file = os.path.join(folder, '{}-show-info.xlsx'.format(site))
 
     # Create site xlsx if not already created
-    if not os.path.exists('{}-show-info.xlsx'.format(site)):
+    if not os.path.exists(out_file):
         wb = openpyxl.Workbook()
-        wb.save('{}-show-info.xlsx'.format(site))
+        wb.save(out_file)
         wb.close
 
     # Open workbook and delete sh_cdp_nei_det sheet if it exists
-    wb = openpyxl.load_workbook(filename='{}-show-info.xlsx'.format(site))
+    wb = openpyxl.load_workbook(out_file)
     if 'sh_cdp_nei_det' in wb.get_sheet_names():
         ws = wb.get_sheet_by_name('sh_cdp_nei_det')
         wb.remove_sheet(ws)
@@ -239,12 +238,12 @@ def show_cdp_nei_det_to_excel(site, logfolder):
     sh_cdp_nei_det_sheet = wb.get_sheet_by_name('sh_cdp_nei_det')
 
     # For every file in Log Directory ending with .log
-    for fn in os.listdir(os.getcwd()):
+    for fn in os.listdir(folder):
 
         # Get sh_cdp_nei_det header and data, sh_int_stat header and data
         if fn.endswith(".log"):
-            sh_cdp_nei_det_header, sh_cdp_nei_det_data = log_file_to_show_cdp_nei_det(fn)
-            sh_ver_header, sh_ver_data = log_file_to_show_ver(fn)
+            sh_cdp_nei_det_header, sh_cdp_nei_det_data = log_file_to_show_cdp_nei_det(os.path.join(folder, fn))
+            sh_ver_header, sh_ver_data = log_file_to_show_ver(os.path.join(folder, fn))
 
             # If row sheet length is 1, insert HOSTNAME to header and write header
             if sh_cdp_nei_det_sheet.max_row == 1:
@@ -259,24 +258,24 @@ def show_cdp_nei_det_to_excel(site, logfolder):
     # Save workbook
     # sh_cdp_nei_det_sheet['I1'] = '=SUBTOTAL(3,H2:H{})'.format(sh_cdp_nei_det_sheet.max_row)
     sh_cdp_nei_det_sheet.auto_filter.ref = 'A1:G1'
-    wb.save('{}-show-info.xlsx'.format(site))
+    wb.save(out_file)
 
-    print 'CDP NEI DET Tab saved to:\t{}\{}-show-info.xlsx'.format(os.getcwd(), site)
+    print 'CDP NEI DET Tab saved to:\t{}'.format(out_file)
 
 
 def log_folder_matrix_to_excel(site, logfolder):
 
-    # Change to Log File Directory
-    os.chdir(logfolder)
+    folder = os.path.abspath(logfolder)
+    out_file = os.path.join(folder, '{}-show-info.xlsx'.format(site))
 
     # Create site xlsx if not already created
-    if not os.path.exists('{}-show-info.xlsx'.format(site)):
+    if not os.path.exists(out_file):
         wb = openpyxl.Workbook()
-        wb.save('{}-show-info.xlsx'.format(site))
+        wb.save(out_file)
         wb.close
 
     # Open workbook and delete sh_cdp_nei_det sheet if it exists
-    wb = openpyxl.load_workbook(filename='{}-show-info.xlsx'.format(site))
+    wb = openpyxl.load_workbook(out_file)
     if 'conn_matrix' in wb.get_sheet_names():
         ws = wb.get_sheet_by_name('conn_matrix')
         wb.remove_sheet(ws)
@@ -285,22 +284,25 @@ def log_folder_matrix_to_excel(site, logfolder):
     wb.create_sheet(title='conn_matrix')
     ws = wb.get_sheet_by_name('conn_matrix')
 
-    for line in log_folder_to_matrix(logfolder):
+    for line in log_folder_to_matrix(folder):
         ws.append(line)
     ws.auto_filter.ref = 'A1:U1'
-    wb.save('{}-show-info.xlsx'.format(site))
+    wb.save(out_file)
 
-    print 'Matrix Tab saved to:\t{}\{}-show-info.xlsx'.format(os.getcwd(), site)
+    print 'Matrix Tab saved to:\t\t{}'.format(out_file)
 
 
 def main():
     # Timestamp the start of the run so that a total run time can be calculated at the end
     start_time = datetime.datetime.now()
     # ************************************************************************************
+
+    print '-' * (len(sys.argv[2]) + 53)
     show_version_to_excel(sys.argv[1], sys.argv[2])
     show_int_stat_to_excel(sys.argv[1], sys.argv[2])
     show_cdp_nei_det_to_excel(sys.argv[1], sys.argv[2])
     log_folder_matrix_to_excel(sys.argv[1], sys.argv[2])
+    print '-' * (len(sys.argv[2]) + 53)
 
     # **************************************************************************************
     # End - Calculate time of execution
